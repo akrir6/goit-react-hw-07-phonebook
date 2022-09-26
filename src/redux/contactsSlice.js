@@ -1,31 +1,64 @@
-const { createSlice } = require('@reduxjs/toolkit');
+import { fetchContacts, addNewContact, removeContact } from './operations';
+import { createSlice } from '@reduxjs/toolkit';
 
 const contactsInitState = {
-  items: [
-    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-  ],
+  items: [],
   filter: '',
+  isLoading: false,
+  error: null,
 };
 
 const contactsSlice = createSlice({
   name: 'contacts',
   initialState: contactsInitState,
   reducers: {
-    addNewContact(state, action) {
+    setFilter: (state, action) => {
+      state.filter = action.payload;
+    },
+  },
+
+  extraReducers: {
+    [fetchContacts.pending]: state => {
+      state.isLoading = true;
+    },
+    [fetchContacts.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items = action.payload;
+    },
+    [fetchContacts.rejected](state, action) {
+      state.isLoading = false;
+      state.error = action.payload;
+    },
+
+    [addNewContact.pending]: state => {
+      state.isLoading = true;
+    },
+    [addNewContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
       state.items.push(action.payload);
     },
-    removeContact(state, action) {
-      state.items = state.items.filter(c => c.id !== action.payload);
+    [addNewContact.rejected](state, action) {
+      state.isLoading = false;
+      state.error = action.payload;
     },
-    setFilter(state, action) {
-      state.filter = action.payload;
+
+    [removeContact.pending]: state => {
+      state.isLoading = true;
+    },
+    [removeContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items = state.items.filter(c => c.id !== action.payload.id);
+    },
+    [removeContact.rejected](state, action) {
+      state.isLoading = false;
+      state.error = action.payload;
     },
   },
 });
 
-export const { addNewContact, removeContact, setFilter } =
-  contactsSlice.actions;
+export const { setFilter } = contactsSlice.actions;
+
 export const contactsReduser = contactsSlice.reducer;

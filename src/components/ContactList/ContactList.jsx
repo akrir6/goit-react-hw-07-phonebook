@@ -12,9 +12,9 @@ export const ContactList = () => {
 
     return (
         <List>
-            {filteredContacts.map(({ id, name, number })=>(
+            {filteredContacts.map(({ id, name, phone })=>(
             <ListItem key={id}>
-                <ContactCard id={id} name={name} number={number}/>
+                <ContactCard id={id} name={name} phone={phone}/>
             </ListItem>
             ))}
         </List>
