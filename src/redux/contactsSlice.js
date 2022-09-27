@@ -1,5 +1,11 @@
 import { fetchContacts, addNewContact, removeContact } from './operations';
-import { createSlice } from '@reduxjs/toolkit';
+import {
+  createSlice,
+  isAnyOf,
+  isFulfilled,
+  isPending,
+  isRejected,
+} from '@reduxjs/toolkit';
 
 const contactsInitState = {
   items: [],
@@ -8,14 +14,10 @@ const contactsInitState = {
   error: null,
 };
 
-const handlePending = state => {
-  state.isLoading = true;
-};
-
-const handleRejected = (state, action) => {
-  state.isLoading = false;
-  state.error = action.payload;
-};
+const requestActions = [fetchContacts, addNewContact, removeContact];
+const isPendingActions = isPending(...requestActions);
+const isFulfilledActions = isFulfilled(...requestActions);
+const isRejectedActions = isRejected(...requestActions);
 
 const contactsSlice = createSlice({
   name: 'contacts',
@@ -26,32 +28,28 @@ const contactsSlice = createSlice({
     },
   },
 
-  extraReducers: {
-    [fetchContacts.pending]: handlePending,
-    [fetchContacts.rejected]: handleRejected,
-    [addNewContact.pending]: handlePending,
-    [addNewContact.rejected]: handleRejected,
-    [removeContact.pending]: handlePending,
-    [removeContact.rejected]: handleRejected,
-
-    [fetchContacts.fulfilled]: (state, action) => {
-      state.isLoading = false;
-      state.error = null;
-      state.items = action.payload;
-    },
-
-    [addNewContact.fulfilled]: (state, action) => {
-      state.isLoading = false;
-      state.error = null;
-      state.items.push(action.payload);
-    },
-
-    [removeContact.fulfilled]: (state, action) => {
-      state.isLoading = false;
-      state.error = null;
-      state.items = state.items.filter(c => c.id !== action.payload.id);
-    },
-  },
+  extraReducers: buider =>
+    buider
+      .addCase(fetchContacts.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(addNewContact.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(removeContact.fulfilled, (state, action) => {
+        state.items = state.items.filter(c => c.id !== action.payload.id);
+      })
+      .addMatcher(isAnyOf(isFulfilledActions), state => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addMatcher(isAnyOf(isPendingActions), state => {
+        state.isLoading = true;
+      })
+      .addMatcher(isAnyOf(isRejectedActions), (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      }),
 });
 
 export const { setFilter } = contactsSlice.actions;
